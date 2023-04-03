@@ -23,29 +23,30 @@ IDXGISwapChain1* g_pSwapChain1 = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
 
 
+
 LRESULT CALLBACK WindowProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam)
 {
     switch (uMsg)
     {
-        case WM_SIZE: // window resizing
-            break;
+    case WM_SIZE: // window resizing
+        break;
 
-        case WM_CLOSE:
-            if (MessageBox(hWnd,
-                L"진짜 종료하시겠습니까?",
-                L"Game Graphics Programming",
-                MB_OKCANCEL) == IDOK)
-            {
-                DestroyWindow(hWnd);
-            }
-            return 0;
+    case WM_CLOSE:
+        if (MessageBox(hWnd,
+            L"진짜 종료하시겠습니까?",
+            L"Game Graphics Programming",
+            MB_OKCANCEL) == IDOK)
+        {
+            DestroyWindow(hWnd);
+        }
+        return 0;
 
-        case WM_DESTROY:
-            PostQuitMessage(0);
-            return 0;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
 
-        default:
-            return DefWindowProc(hWnd, uMsg, wParam, lParam); //Do not process
+    default:
+        return DefWindowProc(hWnd, uMsg, wParam, lParam); // Do not process this message
     }
 
 }
@@ -128,6 +129,7 @@ HRESULT InitWindow(_In_ HINSTANCE hInstance, _In_ INT nCmdShow)
 }
 
 
+
 HRESULT InitDevice()
 {
     HRESULT hr = S_OK;
@@ -145,21 +147,25 @@ HRESULT InitDevice()
 
     D3D_DRIVER_TYPE driverTypes[] =
     {
-    D3D_DRIVER_TYPE_HARDWARE,
-    D3D_DRIVER_TYPE_WARP,
-    D3D_DRIVER_TYPE_REFERENCE,
+        D3D_DRIVER_TYPE_HARDWARE,
+        D3D_DRIVER_TYPE_WARP,
+        D3D_DRIVER_TYPE_REFERENCE,
     };
     UINT numDriverTypes = ARRAYSIZE(driverTypes);
 
+    // Initialization in a different way depending on the feature level
     D3D_FEATURE_LEVEL featureLevels[] =
     {
-    D3D_FEATURE_LEVEL_11_1,
-    D3D_FEATURE_LEVEL_11_0,
-    D3D_FEATURE_LEVEL_10_1,
-    D3D_FEATURE_LEVEL_10_0,
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0,
     };
     UINT numFeatureLevels = ARRAYSIZE(featureLevels);
 
+
+    // D3D11CreateDevice
+    // make Device and DeviceContext
     for (UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++)
     {
         g_driverType = driverTypes[driverTypeIndex];
@@ -179,7 +185,8 @@ HRESULT InitDevice()
         return hr;
 
 
-    // Obtain DXGI Factory from device
+    // Obtain DXGI Factory from device to use Swap Chain
+    // DXGI Factory and DXGI Adapter connect DXGI and graphics dirver
     IDXGIFactory1* dxgiFactory = nullptr;
     IDXGIDevice* dxgiDevice = nullptr;
 
@@ -199,7 +206,7 @@ HRESULT InitDevice()
         return hr;
 
 
-    // Create swap chain
+    // Create Swap Chain
     IDXGIFactory2* dxgiFactory2 = nullptr;
     hr = dxgiFactory->QueryInterface(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(&dxgiFactory2));
     if (dxgiFactory2)
@@ -252,7 +259,7 @@ HRESULT InitDevice()
         return hr;
 
 
-    // Create render target view
+    // Set Back Buffer and Render Target View
     ID3D11Texture2D* pBackBuffer = nullptr;
     hr = g_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&pBackBuffer));
     if (FAILED(hr))
@@ -266,7 +273,7 @@ HRESULT InitDevice()
     g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, nullptr);
 
 
-    // Setup the viewport
+    // Setup the Viewport
     D3D11_VIEWPORT vp;
     vp.Width = (FLOAT)width;
     vp.Height = (FLOAT)height;
@@ -294,20 +301,9 @@ void CleanupDevice()
 
 void Render()
 {
+    // Fill Render Target View with Context
     g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
+
+    // Present
     g_pSwapChain->Present(0, 0);
 }
-
-
-//HRESULT D3D11CreateDevice(
-//    [in, optional] IDXGIAdapter* pAdapter,
-//    D3D_DRIVER_TYPE DriverType,
-//    HMODULE Software,
-//    UINT Flags,
-//    [in, optional] const D3D_FEATURE_LEVEL* pFeatureLevels,
-//    UINT FeatureLevels,
-//    UINT SDKVersion,
-//    [out, optional] ID3D11Device** ppDevice,
-//    [out, optional] D3D_FEATURE_LEVEL* pFeatureLevel,
-//    [out, optional] ID3D11DeviceContext** ppImmediateContext
-//);
