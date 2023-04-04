@@ -22,6 +22,21 @@ IDXGISwapChain* g_pSwapChain = nullptr;
 IDXGISwapChain1* g_pSwapChain1 = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
 
+ID3DBlob* pVertexShaderBlob = nullptr;
+ID3DBlob* pPixelShaderBlob = nullptr;
+
+ID3D11VertexShader* g_pVertexShader = nullptr;
+ID3D11PixelShader* g_pPixelShader = nullptr;
+ID3D11Buffer* g_pVertexBuffer = nullptr;
+ID3D11Buffer* g_pIndexBuffer = nullptr;
+ID3D11InputLayout* g_pVertexLayout = nullptr;
+
+SimpleVertex sVertices[] =
+{
+    {XMFLOAT3(0.0f, 0.5f, 0.5f)},
+    {XMFLOAT3(0.5f, -0.5f, 0.5f)},
+    {XMFLOAT3(-0.5f, -0.5f, 0.5f)},
+};
 
 
 LRESULT CALLBACK WindowProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, _In_ LPARAM lParam)
@@ -283,6 +298,109 @@ HRESULT InitDevice()
     vp.TopLeftY = 0;
     g_pImmediateContext->RSSetViewports(1, &vp);
 
+
+    // 1. Compile vertex/pixel shader
+    PCWSTR fileName = L"../Library/Lab03.fx";
+
+    CompileShaderFromFile(fileName, "VS", "vs_5_0", &pVertexShaderBlob);
+    CompileShaderFromFile(fileName, "PS", "ps_5_0", &pPixelShaderBlob);
+
+
+    // 2. Create Vertex/Pixel shader
+    hr = g_pd3dDevice -> CreateVertexShader(
+        pVertexShaderBlob-> GetBufferPointer(),
+        pVertexShaderBlob -> GetBufferSize(),
+        nullptr,
+        &g_pVertexShader);
+
+    if (FAILED(hr))
+    {
+        pVertexShaderBlob -> Release();
+        return hr;
+    }
+
+    hr = g_pd3dDevice -> CreatePixelShader(
+        pPixelShaderBlob-> GetBufferPointer(),
+        pPixelShaderBlob-> GetBufferSize(),
+        nullptr,
+        &g_pPixelShader);
+
+    if (FAILED(hr))
+    {
+        pPixelShaderBlob -> Release();
+        return hr;
+    }
+
+
+    // 3. Create Input layout object
+    D3D11_INPUT_ELEMENT_DESC layouts[] =
+    {
+        {"POSITION",
+        0,
+        DXGI_FORMAT_R32G32B32_FLOAT,
+        0,
+        0,
+        D3D11_INPUT_PER_VERTEX_DATA,
+        0
+        },
+        //{"COLOR"}
+    };
+    UINT uNumElements = ARRAYSIZE(layouts);
+
+    hr = g_pd3dDevice -> CreateInputLayout(
+        layouts,
+        uNumElements,
+        pVertexShaderBlob -> GetBufferPointer(),
+        pVertexShaderBlob -> GetBufferSize(),
+        &g_pVertexLayout);
+    pVertexShaderBlob -> Release();
+
+    if (FAILED(hr))
+        return hr;
+
+
+    // 4. Binding Input layout
+    g_pImmediateContext -> IASetInputLayout(g_pVertexLayout);
+
+
+    // 5. Create Vertex buffer
+
+    D3D11_BUFFER_DESC bd = {};
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(SimpleVertex) * 3;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = 0;
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem = sVertices;
+
+    hr = g_pd3dDevice -> CreateBuffer(
+        &bd,
+        &initData,
+        &g_pVertexBuffer);
+
+    if (FAILED(hr))
+        return hr;
+
+
+    // 6. Binding Vertex buffer
+    UINT uStride = sizeof(SimpleVertex);
+    UINT uOffset = 0;
+
+    g_pImmediateContext->IASetVertexBuffers(
+        0,                  // slot
+        1,                  // number of buffer
+        &g_pVertexBuffer,   // vertex buffer
+        &uStride,           // stride
+        &uOffset            // offset
+    );
+
+
+    // 7. Set Primitive type
+    g_pImmediateContext-> IASetPrimitiveTopology(
+        D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
+    );
+
+
     return S_OK;
 }
 
@@ -297,6 +415,11 @@ void CleanupDevice()
     if (g_pImmediateContext) g_pImmediateContext->Release();
     if (g_pd3dDevice1) g_pd3dDevice1->Release();
     if (g_pd3dDevice) g_pd3dDevice->Release();
+
+    if (g_pVertexBuffer) g_pVertexBuffer -> Release();
+    if (g_pVertexLayout) g_pVertexLayout -> Release();
+    if (g_pVertexShader) g_pVertexShader -> Release();
+    if (g_pPixelShader) g_pPixelShader -> Release();
 }
 
 void Render()
@@ -304,6 +427,57 @@ void Render()
     // Fill Render Target View with Context
     g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
 
+    // 1. vertex shader binding
+    g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
+
+    // 2. pixel shader binding
+    g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
+
+    // 3. Call Draw method
+    g_pImmediateContext->Draw(3, 0);
+
     // Present
     g_pSwapChain->Present(0, 0);
+
+}
+
+
+HRESULT CompileShaderFromFile(_In_ PCWSTR pszFileName, _In_ PCSTR pszEntryPoint, _In_ PCSTR pszShaderModel, _Outptr_ ID3DBlob** ppBlobOut)
+{
+    HRESULT hr = S_OK;
+
+    DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+
+#if defined (DEBUG) || defined(_DEBUG)
+        dwShaderFlags |= D3DCOMPILE_DEBUG;
+    dwShaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+    ID3DBlob* pErrorBlob = nullptr;
+
+    hr = D3DCompileFromFile
+    (
+        pszFileName,    // FileName
+        nullptr,        // shader macros
+        nullptr,        // include files
+        pszEntryPoint,  // Entry point
+        pszShaderModel, // Shader target
+        dwShaderFlags,  // flag1 
+        0,              // flag2
+        ppBlobOut,      // ID3DBlob out
+        &pErrorBlob     // error blob out
+    );
+
+    if (FAILED(hr))
+    {
+        if (pErrorBlob)
+        {
+            OutputDebugStringA(reinterpret_cast <PCSTR>(pErrorBlob -> GetBufferPointer()));
+            pErrorBlob-> Release();
+        }
+        return hr;
+    }
+
+    if (pErrorBlob) pErrorBlob -> Release();
+    return S_OK;
 }
