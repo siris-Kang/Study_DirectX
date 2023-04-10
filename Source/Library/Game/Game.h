@@ -14,6 +14,13 @@
 struct SimpleVertex
 {
     XMFLOAT3 Pos;
+    XMFLOAT4 Color;
+};
+
+struct ConstantBuffer {
+    XMMATRIX World;
+    XMMATRIX View;
+    XMMATRIX Projection;
 };
 
 
