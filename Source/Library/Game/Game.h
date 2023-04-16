@@ -13,13 +13,20 @@
 
 struct SimpleVertex
 {
-    XMFLOAT3 Pos;
-    XMFLOAT4 Color;
+    XMFLOAT3 Position;
+    XMFLOAT2 Material;
 };
 
-struct ConstantBuffer {
+struct CBWorld
+{
     XMMATRIX World;
+};
+struct CBView
+{
     XMMATRIX View;
+};
+struct CBProjection
+{
     XMMATRIX Projection;
 };
 

@@ -6,7 +6,7 @@ LPCWSTR g_pszWindowClassName = L"GGPWindowClass";
 
 HWND g_hWnd = nullptr;
 HINSTANCE g_hInstance = nullptr;
-LPCWSTR g_pszWindowName = L"2019103899+강경은";
+LPCWSTR g_pszWindowName = L"2019103899 강경은 LAB 04";
 
 
 // D3D variables
@@ -36,14 +36,18 @@ ID3D11Buffer* g_pVertexBuffer = nullptr;
 ID3D11Buffer* g_pIndexBuffer = nullptr;
 ID3D11InputLayout* g_pVertexLayout = nullptr;
 
-ID3D11Buffer* g_pConstantBuffer1 = nullptr;
-XMMATRIX g_worldMatrix1;
-XMMATRIX g_viewMatrix1;
-XMMATRIX g_projectionMatrix1;
-ID3D11Buffer* g_pConstantBuffer2 = nullptr;
-XMMATRIX g_worldMatrix2;
-XMMATRIX g_viewMatrix2;
-XMMATRIX g_projectionMatrix2;
+ID3D11Buffer* g_pCBView = nullptr; // Mvpw constant buffer
+ID3D11Buffer* g_pCBProjection = nullptr;
+ID3D11Buffer* g_pCBWorld = nullptr;
+
+XMMATRIX g_viewMatrix;
+XMMATRIX g_projectionMatrix;
+XMMATRIX g_worldMatrix;
+
+
+// Texture variable
+ID3D11ShaderResourceView* g_pTextureRV = nullptr;
+ID3D11SamplerState* g_pSamplerLinear = nullptr;
 
 
 
@@ -311,26 +315,37 @@ HRESULT InitDevice()
     D3D11_BUFFER_DESC bd = {};
 
     bd = {};
-    bd.ByteWidth = sizeof(ConstantBuffer);
+    bd.ByteWidth = sizeof(XMMATRIX);
     bd.Usage = D3D11_USAGE_DEFAULT;
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bd.CPUAccessFlags = 0;
 
-    hr = g_pd3dDevice -> CreateBuffer(
+    // Create Mvpw constant buffer
+    hr = g_pd3dDevice->CreateBuffer(
         &bd,
         nullptr,
-        &g_pConstantBuffer1
-        );
+        &g_pCBView
+    );
     if (FAILED(hr))
         return hr;
 
     hr = g_pd3dDevice->CreateBuffer(
         &bd,
         nullptr,
-        &g_pConstantBuffer2
+        &g_pCBProjection
     );
     if (FAILED(hr))
         return hr;
+
+    hr = g_pd3dDevice->CreateBuffer(
+        &bd,
+        nullptr,
+        &g_pCBWorld
+    );
+    if (FAILED(hr))
+        return hr;
+
+
 
     // Depth Stencil
     D3D11_TEXTURE2D_DESC descDepth = {};
@@ -370,41 +385,75 @@ HRESULT InitDevice()
     //Cube Vertex and Index
     SimpleVertex sVertices[] =
     {
-        {.Pos = XMFLOAT3(-1.0f, 1.0f, -1.0f),
-        .Color = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f) },
-        {.Pos = XMFLOAT3(1.0f, 1.0f, -1.0f),
-        .Color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f) },
-        {.Pos = XMFLOAT3(1.0f, 1.0f, 1.0f),
-        .Color = XMFLOAT4(0.0f, 1.0f, 1.0f, 1.0f) },
-        {.Pos = XMFLOAT3(-1.0f, 1.0f, 1.0f),
-        .Color = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f) },
-        {.Pos = XMFLOAT3(-1.0f, -1.0f, -1.0f),
-        .Color = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f) },
-        {.Pos = XMFLOAT3(1.0f, -1.0f, -1.0f),
-        .Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f) },
-        {.Pos = XMFLOAT3(1.0f, -1.0f, 1.0f),
-        .Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f) },
-        {.Pos = XMFLOAT3(-1.0f, -1.0f, 1.0f),
-        .Color = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f) },
+        {XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
+        {XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
+        {XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+        {XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
+        {XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
+        {XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
+        {XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
+        {XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+        {XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+        {XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
+        {XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
+        {XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+        {XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
+        {XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
+        {XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
+        {XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
+        {XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
+        {XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
+        {XMFLOAT3(1.0f, 1.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
+        {XMFLOAT3(-1.0f, 1.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
+        {XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
+        {XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+        {XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+        {XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
     };
-    INT sVerticesNum = 8;
+    INT sVerticesNum =24;
 
     WORD sIndices[] =
     {
         3,1,0,
         2,1,3,
-        0,5,4,
-        1,5,0,
-        3,4,7,
-        0,4,3,
-        1,6,5,
-        2,6,1,
-        2,7,6,
-        3,7,2,
+
         6,4,5,
         7,4,6,
+
+        11,9,8,
+        10,9,11,
+
+        14,12,13,
+        15,12,14,
+
+        19,17,16,
+        18,17,19,
+
+        22,20,21,
+        23,20,22
     };
-    INT sIndeicesNum = 12;
+    INT sIndeicesNum = 36;
+
+
+    // Create shader resource
+    hr = CreateDDSTextureFromFile(g_pd3dDevice, L"../Library/seafloor.dds", nullptr, &g_pTextureRV);
+    if (FAILED(hr))
+        return hr;
+
+    // Sampler state
+    D3D11_SAMPLER_DESC sampDesc = { };
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    hr = g_pd3dDevice -> CreateSamplerState(&sampDesc, &g_pSamplerLinear);
+    if (FAILED(hr))
+        return hr;
+
 
 
     // 1. Compile vertex/pixel shader
@@ -452,9 +501,9 @@ HRESULT InitDevice()
         0
         },
 
-        {"COLOR",
+        {"TEXCOORD",
         0,
-        DXGI_FORMAT_R32G32B32A32_FLOAT,
+        DXGI_FORMAT_R32G32_FLOAT,
         0,
         12,
         D3D11_INPUT_PER_VERTEX_DATA,
@@ -497,9 +546,8 @@ HRESULT InitDevice()
         return hr;
 
 
-    //bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
-    bd.ByteWidth = sizeof(WORD) * sIndeicesNum * 3;
+    bd.ByteWidth = sizeof(WORD) * sIndeicesNum;
     bd.BindFlags = D3D10_BIND_INDEX_BUFFER;
     bd.CPUAccessFlags = 0;
     initData = {};
@@ -539,25 +587,21 @@ HRESULT InitDevice()
     );
 
 
-    // Set Mw, Mv, Mp
-    g_worldMatrix1 = XMMatrixIdentity();
-
+    // Set Mv, Mp, Mw
     XMVECTOR eye = XMVectorSet(0.0f, 1.0f, -5.0f, 0.0f);
     XMVECTOR at = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-    g_viewMatrix1 = XMMatrixLookAtLH(eye, at, up);
+    g_viewMatrix = XMMatrixLookAtLH(eye, at, up);
 
-    g_projectionMatrix1 = XMMatrixPerspectiveFovLH(
+    g_projectionMatrix = XMMatrixPerspectiveFovLH(
         XM_PIDIV2,
         width / (FLOAT)height,
         0.01f,
         100.0f
     );
 
-    g_worldMatrix2 = g_worldMatrix1;
-    g_viewMatrix2 = g_viewMatrix1;
-    g_projectionMatrix2 = g_projectionMatrix1;
+    g_worldMatrix = XMMatrixIdentity();
 
     return S_OK;
 }
@@ -582,12 +626,17 @@ void CleanupDevice()
     if (g_pDepthStencil) g_pDepthStencil -> Release();
     if (g_pDepthStencilView) g_pDepthStencilView -> Release();
 
-    if (g_pConstantBuffer1) g_pConstantBuffer1->Release();
-    if (g_pConstantBuffer2) g_pConstantBuffer2->Release();
+    if (g_pCBView) g_pCBView -> Release();
+    if (g_pCBProjection) g_pCBProjection -> Release();
+    if (g_pCBWorld) g_pCBWorld -> Release();
+
+    if (g_pTextureRV) g_pTextureRV -> Release();
+    if (g_pSamplerLinear) g_pSamplerLinear -> Release();
 }
 
 void Render()
 {
+
     // Rotate cube
     static float t = 0.0f;
     if (g_driverType == D3D_DRIVER_TYPE_REFERENCE)
@@ -604,58 +653,43 @@ void Render()
     }
 
     // Mvwvp
-    g_worldMatrix1 = XMMatrixRotationY(t);
+    g_worldMatrix = XMMatrixRotationY(t);
 
-    g_worldMatrix2 = XMMatrixScaling(0.3, 0.3, 0.3);
-    g_worldMatrix2 = XMMatrixRotationY(t*3) * g_worldMatrix2;
-    g_worldMatrix2 = XMMatrixTranslation(8, 0, 0) * g_worldMatrix2;
-    g_worldMatrix2 = XMMatrixRotationY(t*5) * g_worldMatrix2;
+    CBWorld cbw;
+    CBView cbv;
+    CBProjection cbp;
+    cbw.World = XMMatrixTranspose(g_worldMatrix);
+    cbv.View = XMMatrixTranspose(g_viewMatrix);
+    cbp.Projection = XMMatrixTranspose(g_projectionMatrix);
 
+    g_pImmediateContext->UpdateSubresource(g_pCBView, 0, nullptr, &cbv, 0, 0);
+    g_pImmediateContext->UpdateSubresource(g_pCBProjection, 0, nullptr, &cbp, 0, 0);
+    g_pImmediateContext->UpdateSubresource(g_pCBWorld, 0, nullptr, &cbw, 0, 0);
 
-    // Main cube constant buffer
-    ConstantBuffer cb1;
-    cb1.World = XMMatrixTranspose(g_worldMatrix1);
-    cb1.View = XMMatrixTranspose(g_viewMatrix1);
-    cb1.Projection = XMMatrixTranspose(g_projectionMatrix1);
-    g_pImmediateContext->UpdateSubresource(
-        g_pConstantBuffer1,
-        0,
-        nullptr,
-        &cb1,
-        0,
-        0
-    );
-
-    // Sub cube constant buffer
-    ConstantBuffer cb2;
-    cb2.World = XMMatrixTranspose(g_worldMatrix2);
-    cb2.View = XMMatrixTranspose(g_viewMatrix2);
-    cb2.Projection = XMMatrixTranspose(g_projectionMatrix2);
-    g_pImmediateContext->UpdateSubresource(
-        g_pConstantBuffer2,
-        0,
-        nullptr,
-        &cb2,
-        0,
-        0
-    );
 
     // Fill Render Target View with Context
     g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
+
     // Depth Stencil View clear
     g_pImmediateContext->ClearDepthStencilView(g_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-    // 1. vertex shader binding
+    // Vertex shader binding
     g_pImmediateContext->VSSetShader(g_pVertexShader, nullptr, 0);
-    // 2. pixel shader binding
+
+    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pCBView);
+    g_pImmediateContext->VSSetConstantBuffers(1, 1, &g_pCBProjection);
+    g_pImmediateContext->VSSetConstantBuffers(2, 1, &g_pCBWorld);
+
+    // Pixel shader binding
     g_pImmediateContext->PSSetShader(g_pPixelShader, nullptr, 0);
 
-    // Constant buffer binding
-    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer1);
+    g_pImmediateContext->PSSetShaderResources(0, 1, &g_pTextureRV); // send Texture object
+    g_pImmediateContext->PSSetSamplers(0, 1, &g_pSamplerLinear); // send Sampler state
+
+
+    // Draw
     g_pImmediateContext->DrawIndexed(36, 0, 0);
 
-    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer2);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
 
     // Present
     g_pSwapChain->Present(0, 0);
