@@ -14,21 +14,31 @@
 struct SimpleVertex
 {
     XMFLOAT3 Position;
-    XMFLOAT2 Material;
+    XMFLOAT2 TexCoord;
+    XMFLOAT3 Normal;
 };
 
-struct CBWorld
-{
-    XMMATRIX World;
-};
-struct CBView
+struct CBChangeOnCameraMovement
 {
     XMMATRIX View;
+    XMFLOAT4 CameraPosition;
 };
 struct CBProjection
 {
     XMMATRIX Projection;
 };
+struct CBChangesEveryFrame
+{
+    XMMATRIX World;
+    XMFLOAT4 OutColor;
+};
+
+struct CBLights
+{
+    XMFLOAT4 LightPositions[2];
+    XMFLOAT4 LightColors[2];
+};
+
 
 
 HRESULT InitWindow(_In_ HINSTANCE hInstance, _In_ INT nCmdShow);
