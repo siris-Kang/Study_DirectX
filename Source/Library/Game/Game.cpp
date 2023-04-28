@@ -1,4 +1,4 @@
-#include "Game.h"
+ï»¿#include "Game.h"
 
 
 // Window variable
@@ -6,7 +6,7 @@ LPCWSTR g_pszWindowClassName = L"GGPWindowClass";
 
 HWND g_hWnd = nullptr;
 HINSTANCE g_hInstance = nullptr;
-LPCWSTR g_pszWindowName = L"2019103899+°­°æÀº";
+LPCWSTR g_pszWindowName = L"2019103899 ê°•ê²½ì€ Assignment 01";
 
 
 // D3D variables
@@ -40,10 +40,6 @@ ID3D11Buffer* g_pConstantBuffer1 = nullptr;
 XMMATRIX g_worldMatrix1;
 XMMATRIX g_viewMatrix1;
 XMMATRIX g_projectionMatrix1;
-ID3D11Buffer* g_pConstantBuffer2 = nullptr;
-XMMATRIX g_worldMatrix2;
-XMMATRIX g_viewMatrix2;
-XMMATRIX g_projectionMatrix2;
 
 
 
@@ -56,7 +52,7 @@ LRESULT CALLBACK WindowProc(_In_ HWND hWnd, _In_ UINT uMsg, _In_ WPARAM wParam, 
 
     case WM_CLOSE:
         if (MessageBox(hWnd,
-            L"ÁøÂ¥ Á¾·áÇÏ½Ã°Ú½À´Ï±î?",
+            L"Do you want to quit?",
             L"Game Graphics Programming",
             MB_OKCANCEL) == IDOK)
         {
@@ -274,9 +270,9 @@ HRESULT InitDevice()
         sd.SampleDesc.Quality = 0;
         sd.Windowed = TRUE;
 
-        hr = dxgiFactory-> CreateSwapChain(g_pd3dDevice, &sd, &g_pSwapChain);
+        hr = dxgiFactory->CreateSwapChain(g_pd3dDevice, &sd, &g_pSwapChain);
     }
-    dxgiFactory-> Release();
+    dxgiFactory->Release();
 
     if (FAILED(hr))
         return hr;
@@ -316,21 +312,14 @@ HRESULT InitDevice()
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bd.CPUAccessFlags = 0;
 
-    hr = g_pd3dDevice -> CreateBuffer(
-        &bd,
-        nullptr,
-        &g_pConstantBuffer1
-        );
-    if (FAILED(hr))
-        return hr;
-
     hr = g_pd3dDevice->CreateBuffer(
         &bd,
         nullptr,
-        &g_pConstantBuffer2
+        &g_pConstantBuffer1
     );
     if (FAILED(hr))
         return hr;
+
 
     // Depth Stencil
     D3D11_TEXTURE2D_DESC descDepth = {};
@@ -346,7 +335,7 @@ HRESULT InitDevice()
     descDepth.CPUAccessFlags = 0;
     descDepth.MiscFlags = 0;
 
-    hr = g_pd3dDevice -> CreateTexture2D(&descDepth, nullptr, &g_pDepthStencil);
+    hr = g_pd3dDevice->CreateTexture2D(&descDepth, nullptr, &g_pDepthStencil);
     if
         (FAILED
         (hr))
@@ -357,11 +346,11 @@ HRESULT InitDevice()
     descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     descDSV.Texture2D.MipSlice = 0;
 
-    hr = g_pd3dDevice -> CreateDepthStencilView(g_pDepthStencil, &descDSV, &g_pDepthStencilView);
+    hr = g_pd3dDevice->CreateDepthStencilView(g_pDepthStencil, &descDSV, &g_pDepthStencilView);
     if (FAILED(hr))
         return hr;
 
-    g_pImmediateContext -> OMSetRenderTargets(1, &g_pRenderTargetView, g_pDepthStencilView);
+    g_pImmediateContext->OMSetRenderTargets(1, &g_pRenderTargetView, g_pDepthStencilView);
     if (FAILED(hr))
         return hr;
 
@@ -408,34 +397,34 @@ HRESULT InitDevice()
 
 
     // 1. Compile vertex/pixel shader
-    PCWSTR fileName = L"../Library/Lab04.fx";
+    PCWSTR fileName = L"../Library/Lab03.fx";
 
     CompileShaderFromFile(fileName, "VS", "vs_5_0", &pVertexShaderBlob);
     CompileShaderFromFile(fileName, "PS", "ps_5_0", &pPixelShaderBlob);
 
 
     // 2. Create Vertex/Pixel shader
-    hr = g_pd3dDevice -> CreateVertexShader(
-        pVertexShaderBlob-> GetBufferPointer(),
-        pVertexShaderBlob -> GetBufferSize(),
+    hr = g_pd3dDevice->CreateVertexShader(
+        pVertexShaderBlob->GetBufferPointer(),
+        pVertexShaderBlob->GetBufferSize(),
         nullptr,
         &g_pVertexShader);
 
     if (FAILED(hr))
     {
-        pVertexShaderBlob -> Release();
+        pVertexShaderBlob->Release();
         return hr;
     }
 
-    hr = g_pd3dDevice -> CreatePixelShader(
-        pPixelShaderBlob-> GetBufferPointer(),
-        pPixelShaderBlob-> GetBufferSize(),
+    hr = g_pd3dDevice->CreatePixelShader(
+        pPixelShaderBlob->GetBufferPointer(),
+        pPixelShaderBlob->GetBufferSize(),
         nullptr,
         &g_pPixelShader);
 
     if (FAILED(hr))
     {
-        pPixelShaderBlob -> Release();
+        pPixelShaderBlob->Release();
         return hr;
     }
 
@@ -464,20 +453,20 @@ HRESULT InitDevice()
     };
     UINT uNumElements = ARRAYSIZE(layouts);
 
-    hr = g_pd3dDevice -> CreateInputLayout(
+    hr = g_pd3dDevice->CreateInputLayout(
         layouts,
         uNumElements,
-        pVertexShaderBlob -> GetBufferPointer(),
-        pVertexShaderBlob -> GetBufferSize(),
+        pVertexShaderBlob->GetBufferPointer(),
+        pVertexShaderBlob->GetBufferSize(),
         &g_pVertexLayout);
-    pVertexShaderBlob -> Release();
+    pVertexShaderBlob->Release();
 
     if (FAILED(hr))
         return hr;
 
 
     // 4. Binding Input layout
-    g_pImmediateContext -> IASetInputLayout(g_pVertexLayout);
+    g_pImmediateContext->IASetInputLayout(g_pVertexLayout);
 
 
     // 5. Create Vertex buffer/Index buffer
@@ -488,7 +477,7 @@ HRESULT InitDevice()
     D3D11_SUBRESOURCE_DATA initData = {};
     initData.pSysMem = sVertices;
 
-    hr = g_pd3dDevice -> CreateBuffer(
+    hr = g_pd3dDevice->CreateBuffer(
         &bd,
         &initData,
         &g_pVertexBuffer);
@@ -526,7 +515,7 @@ HRESULT InitDevice()
         &uOffset            // offset
     );
 
-    g_pImmediateContext -> IASetIndexBuffer(
+    g_pImmediateContext->IASetIndexBuffer(
         g_pIndexBuffer, // index buffer
         DXGI_FORMAT_R16_UINT, // format of the index data
         0 // offset
@@ -534,7 +523,7 @@ HRESULT InitDevice()
 
 
     // 7. Set Primitive type
-    g_pImmediateContext-> IASetPrimitiveTopology(
+    g_pImmediateContext->IASetPrimitiveTopology(
         D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST
     );
 
@@ -555,10 +544,6 @@ HRESULT InitDevice()
         100.0f
     );
 
-    g_worldMatrix2 = g_worldMatrix1;
-    g_viewMatrix2 = g_viewMatrix1;
-    g_projectionMatrix2 = g_projectionMatrix1;
-
     return S_OK;
 }
 
@@ -574,16 +559,15 @@ void CleanupDevice()
     if (g_pd3dDevice1) g_pd3dDevice1->Release();
     if (g_pd3dDevice) g_pd3dDevice->Release();
 
-    if (g_pVertexBuffer) g_pVertexBuffer -> Release();
-    if (g_pVertexLayout) g_pVertexLayout -> Release();
-    if (g_pVertexShader) g_pVertexShader -> Release();
-    if (g_pPixelShader) g_pPixelShader -> Release();
+    if (g_pVertexBuffer) g_pVertexBuffer->Release();
+    if (g_pVertexLayout) g_pVertexLayout->Release();
+    if (g_pVertexShader) g_pVertexShader->Release();
+    if (g_pPixelShader) g_pPixelShader->Release();
 
-    if (g_pDepthStencil) g_pDepthStencil -> Release();
-    if (g_pDepthStencilView) g_pDepthStencilView -> Release();
+    if (g_pDepthStencil) g_pDepthStencil->Release();
+    if (g_pDepthStencilView) g_pDepthStencilView->Release();
 
     if (g_pConstantBuffer1) g_pConstantBuffer1->Release();
-    if (g_pConstantBuffer2) g_pConstantBuffer2->Release();
 }
 
 void Render()
@@ -606,11 +590,6 @@ void Render()
     // Mvwvp
     g_worldMatrix1 = XMMatrixRotationY(t);
 
-    g_worldMatrix2 = XMMatrixScaling(0.3, 0.3, 0.3);
-    g_worldMatrix2 = XMMatrixRotationY(t*3) * g_worldMatrix2;
-    g_worldMatrix2 = XMMatrixTranslation(8, 0, 0) * g_worldMatrix2;
-    g_worldMatrix2 = XMMatrixRotationY(t*5) * g_worldMatrix2;
-
 
     // Main cube constant buffer
     ConstantBuffer cb1;
@@ -626,19 +605,6 @@ void Render()
         0
     );
 
-    // Sub cube constant buffer
-    ConstantBuffer cb2;
-    cb2.World = XMMatrixTranspose(g_worldMatrix2);
-    cb2.View = XMMatrixTranspose(g_viewMatrix2);
-    cb2.Projection = XMMatrixTranspose(g_projectionMatrix2);
-    g_pImmediateContext->UpdateSubresource(
-        g_pConstantBuffer2,
-        0,
-        nullptr,
-        &cb2,
-        0,
-        0
-    );
 
     // Fill Render Target View with Context
     g_pImmediateContext->ClearRenderTargetView(g_pRenderTargetView, Colors::MidnightBlue);
@@ -654,9 +620,6 @@ void Render()
     g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer1);
     g_pImmediateContext->DrawIndexed(36, 0, 0);
 
-    g_pImmediateContext->VSSetConstantBuffers(0, 1, &g_pConstantBuffer2);
-    g_pImmediateContext->DrawIndexed(36, 0, 0);
-
     // Present
     g_pSwapChain->Present(0, 0);
 
@@ -670,7 +633,7 @@ HRESULT CompileShaderFromFile(_In_ PCWSTR pszFileName, _In_ PCSTR pszEntryPoint,
     DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 
 #if defined (DEBUG) || defined(_DEBUG)
-        dwShaderFlags |= D3DCOMPILE_DEBUG;
+    dwShaderFlags |= D3DCOMPILE_DEBUG;
     dwShaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
@@ -693,12 +656,12 @@ HRESULT CompileShaderFromFile(_In_ PCWSTR pszFileName, _In_ PCSTR pszEntryPoint,
     {
         if (pErrorBlob)
         {
-            OutputDebugStringA(reinterpret_cast <PCSTR>(pErrorBlob -> GetBufferPointer()));
-            pErrorBlob-> Release();
+            OutputDebugStringA(reinterpret_cast <PCSTR>(pErrorBlob->GetBufferPointer()));
+            pErrorBlob->Release();
         }
         return hr;
     }
 
-    if (pErrorBlob) pErrorBlob -> Release();
+    if (pErrorBlob) pErrorBlob->Release();
     return S_OK;
 }
