@@ -1,6 +1,9 @@
 #include "Texture/Texture.h"
 
 Texture::Texture(const std::filesystem::path& filePath)
+	: m_filePath(filePath)
+	, m_textureRV()
+	, m_samplerLinear()
 {
 
 }
@@ -54,6 +57,11 @@ ComPtr<ID3D11SamplerState>& Texture::GetSamplerState()
 
 
 Material::Material()
+	:pDiffuse()
+	, pSpecular()
+	, AmbientColor()
+	, DiffuseColor()
+	, SpecularColor()
 {
 
 }

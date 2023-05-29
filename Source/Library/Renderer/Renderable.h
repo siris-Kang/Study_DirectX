@@ -60,6 +60,7 @@ public:
 	void RotateX(_In_ FLOAT angle);
 	void RotateY(_In_ FLOAT angle);
 	void RotateZ(_In_ FLOAT angle);
+	void RotateYInObjectCoordinate(_In_ FLOAT angle, _In_ XMVECTOR objectOffset);
 	void RotateRollPitchYaw(_In_ FLOAT roll, _In_ FLOAT pitch, _In_ FLOAT yaw);
 	void Scale(_In_ FLOAT scaleX, _In_ FLOAT scaleY, _In_ FLOAT scaleZ);
 	void Translate(_In_ const XMVECTOR& offset);

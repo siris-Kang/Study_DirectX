@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Common.h"
 #include "Renderer/Renderable.h"
 #include "Texture/Texture.h"
@@ -9,6 +11,7 @@ struct aiMaterial;
 class Model :public Renderable
 {
 public:
+	Model() = default;
 	Model(_In_ const std::filesystem::path& filePath);
 	virtual ~Model() = default;
 	virtual HRESULT Initialize(_In_ ID3D11Device* pDevice, _In_ ID3D11DeviceContext* pImmediateContext);

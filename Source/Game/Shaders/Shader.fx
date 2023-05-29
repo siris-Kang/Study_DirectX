@@ -1,4 +1,5 @@
-#define NUM_LIGHTS (2)
+#define NUM_LIGHTS (1)
+//NUM_LIGHT in Shader.fx and DataType.h 
 
 Texture2D txDiffuse : register(t0);
 Texture2D txSpecular : register(t1);

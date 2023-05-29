@@ -12,12 +12,13 @@ Renderer::Renderer()
     , m_renderTargetView()
     , m_depthStencil()
     , m_depthStencilView()
-    , m_camera(XMVectorSet(0.0f, 3.0f, -6.0f, 0.0f))
+    , m_camera(XMVectorSet(0.0f, 6.0f, -15.0f, 0.0f))
     , m_projection()
     , m_renderables()
     , m_aPointLights()
     , m_vertexShaders()
     , m_pixelShaders()
+    , m_character()
 {
 }
 
@@ -246,6 +247,7 @@ HRESULT Renderer::InitDevice(_In_ HWND hWnd)
         it->second->Initialize(m_d3dDevice.Get(), m_immediateContext.Get());
     }
 
+
     return S_OK;
 }
 
@@ -299,9 +301,19 @@ HRESULT Renderer::AddPixelShader(_In_ PCWSTR pszPixelShaderName, _In_ const std:
     return S_OK;
 }
 
+void Renderer::SetCharacter(_In_ const std::shared_ptr<Character>& character)
+{
+    m_character = character;
+}
+
+
 void Renderer::HandleInput(_In_ const InputDirections& directions, _In_ const MouseRelativeMovement& mouseRelativeMovement, const BOOL& mouseRightClick, _In_ FLOAT deltaTime)
 {
     m_camera.HandleInput(directions, mouseRelativeMovement, mouseRightClick, deltaTime);
+    if (m_character != NULL)
+    {
+        m_character->HandleInput(directions, deltaTime);
+    }
 }
 
 void Renderer::Update(_In_ FLOAT deltaTime)
@@ -314,9 +326,13 @@ void Renderer::Update(_In_ FLOAT deltaTime)
     for (UINT i = 0; i < NUM_LIGHTS; ++i)
     {
         m_aPointLights[i]->Update(deltaTime);
-    }
+    } 
 
     m_camera.Update(deltaTime);
+    if (m_character != NULL)
+    {
+        m_character->Update(deltaTime);
+    }
 }
 
 void Renderer::Render()
@@ -413,7 +429,7 @@ void Renderer::Render()
             );
         }
 
-        m_immediateContext->DrawIndexed(it->second->GetNumIndices(), 0u, 0); // 36 vertices needed for 12 triangles in a triangle list
+       // m_immediateContext->DrawIndexed(it->second->GetNumIndices(), 0u, 0); // 36 vertices needed for 12 triangles in a triangle list
     }
 
 

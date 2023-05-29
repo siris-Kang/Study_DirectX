@@ -6,13 +6,14 @@
 #include "Light/RotatingPointLight.h"
 #include "Game/Game.h"
 #include "Model/Model.h"
+#include "Character/Character.h"
 
 
 
 INT WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ INT nCmdShow)
 {
 
-	std::unique_ptr<Game> game = std::make_unique<Game>(L"GGP : 2019103899 강경은");
+	std::unique_ptr<Game> game = std::make_unique<Game>(L"GGP: 2019103899 강경은");
 
     // Phong Lighting Shaders
     std::shared_ptr<VertexShader> vertexShader = std::make_shared<VertexShader>(L"Shaders/Shader.fx", "VS", "vs_5_0");
@@ -46,29 +47,6 @@ INT WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return 0;
 
 
-    /*-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    TODO1: Rotating Point Light
-    -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-*/
-    XMStoreFloat4(&color, Colors::IndianRed);
-    std::shared_ptr<RotatingPointLight> rotatingPointLight = std::make_shared<RotatingPointLight>(XMFLOAT4(0.0f, 0.0f, -5.0f, 1.0f), color);
-
-    if (FAILED(game->GetRenderer()->AddPointLight(1u, rotatingPointLight)))
-        return 0;
-
-    /*-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-    TODO2: Rotating Point Light Cube
-    -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-*/
-    std::shared_ptr<RotatingCube> rotateLightCube = std::make_shared<RotatingCube>(color);
-    rotateLightCube->Translate(XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f));
-
-
-    if (FAILED(game->GetRenderer()->AddRenderable(L"RotateLightCube", rotateLightCube)))
-        return 0;
-    if (FAILED(game->GetRenderer()->SetVertexShaderOfRenderable(L"RotateLightCube", L"VS")))
-        return 0;
-    if (FAILED(game->GetRenderer()->SetPixelShaderOfRenderable(L"RotateLightCube", L"PSSolid")))
-        return 0;
-
 
     // Phong Cube
     /*std::shared_ptr<Cube> phongCube = std::make_shared<Cube>(L"seafloor.dds");
@@ -79,8 +57,10 @@ INT WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     if (FAILED(game->GetRenderer()->SetPixelShaderOfRenderable(L"PhongCube", L"PS")))
         return 0;*/
 
-    std::shared_ptr<Model> spider = std::make_shared<Model>(L"../../Data/Stone/Stone.obj");
+    std::shared_ptr<Character> spider = std::make_shared<Character>(L"../../Data/Stone/Stone.obj");
+    //std::shared_ptr<Model> spider = std::make_shared<Model>(L"../../Data/Stone/Stone.obj");
     spider->Scale(0.5f, 0.5f, 0.5f);
+    game->GetRenderer()->SetCharacter(spider);
 
     if (FAILED(game->GetRenderer()->AddRenderable(L"Spider", spider)))
         return 0;
@@ -88,8 +68,6 @@ INT WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return 0;
     if (FAILED(game->GetRenderer()->SetPixelShaderOfRenderable(L"Spider", L"PS")))
         return 0;
-
-
 
 
     if (FAILED(game->Initialize(hInstance, nCmdShow)))

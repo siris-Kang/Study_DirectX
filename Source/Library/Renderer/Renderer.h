@@ -8,6 +8,7 @@
 #include "Shader/VertexShader.h"
 #include "Shader/PixelShader.h"
 #include "Camera/Camera.h"
+#include "Character/Character.h"
 
 class Renderer
 {
@@ -20,6 +21,8 @@ public:
 	HRESULT AddPointLight(_In_ size_t index, _In_ const std::shared_ptr<PointLight>& pPointLight);
 	HRESULT AddVertexShader(_In_ PCWSTR pszVertexShaderName, _In_ const std::shared_ptr<VertexShader>& vertexShader);
 	HRESULT AddPixelShader(_In_ PCWSTR pszPixelShaderName, _In_ const std::shared_ptr<PixelShader>& pixelShader);
+
+	void SetCharacter(_In_ const std::shared_ptr<Character>& character);
 
 	void HandleInput(_In_ const InputDirections& directions, _In_ const MouseRelativeMovement& mouseRelativeMovement, const BOOL& mouseRightClick, _In_ FLOAT deltaTime);
 	void Update(_In_ FLOAT deltaTime);
@@ -48,6 +51,8 @@ private:
 
 	Camera m_camera;
 	XMMATRIX m_projection;
+
+	std::shared_ptr<Character> m_character;
 
 	std::unordered_map<PCWSTR, std::shared_ptr<Renderable>> m_renderables;
 	std::shared_ptr<PointLight> m_aPointLights[NUM_LIGHTS];

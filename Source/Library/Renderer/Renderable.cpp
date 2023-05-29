@@ -57,7 +57,7 @@ HRESULT Renderable::initialize(
 
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(WORD) * GetNumIndices();
-	bd.BindFlags = D3D10_BIND_INDEX_BUFFER;
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 
 	initData.pSysMem = getIndices();
@@ -68,6 +68,7 @@ HRESULT Renderable::initialize(
 		return hr;
 
 	bd.ByteWidth = sizeof(CBChangeEveryFrame);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	hr = pDevice->CreateBuffer(&bd, nullptr, m_cbChangeEveryFrame.GetAddressOf());
 	if (FAILED(hr))
 		return hr;
@@ -164,6 +165,15 @@ void Renderable::RotateZ(_In_ FLOAT angle)
 {
 	m_world *= XMMatrixRotationZ(angle);
 }
+
+
+void Renderable::RotateYInObjectCoordinate(_In_ FLOAT angle, _In_ XMVECTOR objectOffset)
+{
+	m_world *= XMMatrixTranslationFromVector(-objectOffset);
+	m_world *= XMMatrixRotationY(angle);
+	m_world *= XMMatrixTranslationFromVector(objectOffset);
+}
+
 
 void Renderable::RotateRollPitchYaw(_In_ FLOAT roll, _In_ FLOAT pitch, _In_ FLOAT yaw)
 {

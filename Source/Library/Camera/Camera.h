@@ -21,10 +21,13 @@ public:
 	virtual HRESULT Initialize(_In_ ID3D11Device* device, _In_ ID3D11DeviceContext* pImmediateContext);
 	virtual void Update(_In_ FLOAT deltaTime);
 
+
 protected:
 	static constexpr const XMVECTORF32 DEFAULT_FORWARD = { 0.0f, 0.0f, 1.0f, 0.0f };
 	static constexpr const XMVECTORF32 DEFAULT_RIGHT = { 1.0f, 0.0f, 0.0f, 0.0f };
 	static constexpr const XMVECTORF32 DEFAULT_UP = { 0.0f, 1.0f, 0.0f, 0.0f };
+
+	static constexpr const XMVECTORF32 DEFAULT_TARGET = { 0.0f, -1.0f, 2.0f, 0.0f };
 
 	ComPtr<ID3D11Buffer> m_cbChangeOnCameraMovement;
 
@@ -48,4 +51,6 @@ protected:
 
 	XMMATRIX m_rotation;
 	XMMATRIX m_view;
+
+	XMMATRIX m_target;
 };
